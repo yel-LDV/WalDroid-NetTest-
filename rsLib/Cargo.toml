@@ -1,0 +1,15 @@
+[package]
+name = "btc_wallet_core"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+name = "btc_wallet_core"
+
+[dependencies]
+bdk = { version = "0.30.2", features = ["std", "electrum", "keys-bip39"] }
+ureq = { version = "2", features = ["json"] }
+serde_json = "1"
+thiserror = "1"
+jni = "0.21"

@@ -1,0 +1,8 @@
+libs/
+test
+target
+.idea
+.kotlin
+.vscode
+build
+*.jar

@@ -4,7 +4,7 @@ use std::time::Duration;
 use bdk::bitcoin::{Address, Network};
 use bdk::miniscript::Segwitv0;
 use bdk::{
-    blockchain::electrum::ElectrumBlockchain,
+    blockchain::{electrum::ElectrumBlockchain, Blockchain},
     database::MemoryDatabase,
     electrum_client::Client,
     keys::{
@@ -114,7 +114,13 @@ pub fn send_bitcoin(
     fee_rate_sat_per_vbyte: f32,
 ) -> Result<String, WalletError> {
     let wallet = build_wallet(mnemonic)?;
-    sync_wallet(&wallet)?;
+
+    let client = Client::new(ELECTRUM_URL).map_err(|e| WalletError::SyncError(e.to_string()))?;
+    let blockchain = ElectrumBlockchain::from(client);
+
+    wallet
+        .sync(&blockchain, SyncOptions::default())
+        .map_err(|e| WalletError::SyncError(e.to_string()))?;
 
     let addr = Address::from_str(to_address)
         .map_err(|e| WalletError::TxBuildError(e.to_string()))?
@@ -138,7 +144,13 @@ pub fn send_bitcoin(
         .map_err(|e| WalletError::TxBuildError(e.to_string()))?;
 
     let tx = psbt.extract_tx();
-    Ok(bdk::bitcoin::consensus::encode::serialize_hex(&tx))
+    let txid = tx.txid();
+
+    blockchain
+        .broadcast(&tx)
+        .map_err(|e| WalletError::TxBuildError(e.to_string()))?;
+
+    Ok(txid.to_string())
 }
 
 // ── Precios y conversión ──────────────────────────────────────────
